@@ -1,0 +1,94 @@
+---
+title: "Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+1. Read the data from the data set. Enlist the variables in the data set and display its structure.
+(Set the path in console to the directory where data set is present or specify full path of file)
+```{r}
+set <- read.delim("facebook.txt", header = TRUE,  sep = "\t")
+names(set)
+str(set)
+```
+
+Install and load the library ggplot2.
+```{r}
+suppressWarnings(library(ggplot2))
+```
+
+
+2. We start by displaying the Birthday count of facebook users. Breaks represents the number of parts we want to divide our histogram into.
+```{r}
+qplot(x = dob_day, data = set, binwidth = 1,
+     color = I('black'), fill = I('#42A5F5'),
+     xlab = "Birth Dates", ylab = "Number of Users") +
+  scale_x_continuous(breaks = seq(1, 31))
+```
+
+3. To make sense of the discrepancy of the tall bar on 1st of the month, we split the histogram into 12 histograms.
+```{r}
+qplot(x = dob_day, data = set, binwidth = 1, 
+     color = I('black'), fill = I('#42A5F5'),
+     xlab = "Birth Dates", ylab = "Nummber of Users") +
+  facet_wrap(~dob_month, ncol = 3) +
+  scale_x_continuous(breaks = seq(0, 31, 5))
+```
+
+4.Next, we create a histogram of friend_count.
+```{r}
+qplot(x = friend_count, data = set, binwidth = 50,
+    color = I('black'), fill = I('#42A5F5'))
+```
+
+5. We try to answer the question who has more friends on average - males or females.
+Hence we facet our histogram, based on gender.
+```{r}
+qplot(x = friend_count, data = set, binwidth = 50,
+    color = I('black'), fill = I('#42A5F5')) +
+  facet_wrap(~gender) +
+  coord_cartesian(xlim = c(0, 1000))
+```
+
+To eliminate the NA observations, we subset the data to exclude them.
+```{r}
+qplot(y = friend_count, x = gender,  data = subset(set, !is.na(gender)), geom = 'boxplot') +
+  coord_cartesian(ylim = c(0, 600))
+
+```
+
+We can observe that females have a higher median friend count than males.
+We create a frequency polygon to verify this.
+```{r}
+qplot(x = friend_count, data = subset(set, !is.na(gender)), binwidth = 50, 
+      color = gender, geom = 'freqpoly') +
+  coord_cartesian(xlim = c(0, 1500))
+```
+6. We try to answer the question 'what is the relation between age and tenure?'
+```{r}
+ggplot(aes(y = tenure/365,  x = age), data = subset(set, !is.na(tenure))) +
+  geom_point(alpha = 1/20, position = position_jitter(height = 0), color = I('orange')) +
+  coord_cartesian(xlim = c(20, 70), ylim = c(0, 7)) +
+  xlab("Ages of users") +
+  ylab("Number of years Spent on Facebook") +
+  geom_line(stat = 'summary', fun.y = mean) +
+  geom_line(stat = 'summary', fun.y = median, color = I('blue'))
+```
+7. We will now see how the friendships initiated by people vary with their current friend count using simple linear regression
+```{r}
+
+attach(set)
+
+plot(friend_count, friendships_initiated, main ="Scatterplot", col = 7)
+
+cor(friend_count, friendships_initiated)
+
+lreg <- lm(friendships_initiated ~ friend_count)
+
+summary(lreg)
+
+abline(lreg, col = 9, lw = 2)
+
+```
